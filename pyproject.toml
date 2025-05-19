@@ -1,7 +1,9 @@
 [project]
 name = "ezib-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "An MCP server built on `ezib_async` that exposes Interactive Brokers' trading and market data functionality."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "mcp[cli]>=1.9.0",
+]
