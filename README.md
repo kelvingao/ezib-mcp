@@ -1,9 +1,5 @@
 <h1 align="center">EZIB-MCP: Interactive Brokers Trading for AI Agents</h1>
 
-<p align="center">
-  <img src="https://www.interactivebrokers.com/images/web/logos/ib-logo-dark.svg" alt="Interactive Brokers Logo" width="400">
-</p>
-
 A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server implementation that enables AI agents to interact with Interactive Brokers' trading platform, providing access to market data, account information, and trading functionality.
 
 ## Overview
