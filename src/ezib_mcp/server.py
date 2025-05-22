@@ -26,11 +26,11 @@ import os
 import asyncio
 
 from mcp.server.fastmcp import FastMCP, Context
-from ezib_async import ezIBAsync, AccountValue, PortfolioItem, Position
-from typing import Dict, List, Any
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from dataclasses import dataclass
+from ezib_async import ezIBAsync
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -61,6 +61,13 @@ async def ezib_lifespan(server: FastMCP) -> AsyncIterator[EzIBContext]:
     
     try:
         await ezib.connectAsync()
+        await asyncio.sleep(5)
+
+        for i in range(len(ezib.accountCodes)):
+            if i != len(ezib.accountCodes) - 1:
+                ezib.disconnect()
+                await ezib.connectAsync(account=ezib.accountCodes[i+1])
+            
         yield EzIBContext(ezib=ezib)
     finally:
         # close the connection when done
@@ -80,12 +87,15 @@ mcp = FastMCP(
 # multi-account account values
 # ---------------------------------------
 @mcp.tool()
-async def get_accounts(ctx: Context) -> Dict[str, List[AccountValue]]:
+async def get_accounts(ctx: Context) -> dict:
     """
-    Returns all the accounts values of all the multi-account.
+    Get account values for all accounts.
     
-    :param ctx: The context containing the ezib connection
-    :return: A dictionary mapping account names to a list of account values
+    Args:
+        ctx: The context containing the ezib connection
+        
+    Returns:
+        dict: A dict of account values for all accounts
     """
     ezib = ctx.request_context.lifespan_context.ezib
     if ezib.connected:
@@ -97,12 +107,15 @@ async def get_accounts(ctx: Context) -> Dict[str, List[AccountValue]]:
 # multi-account portfolios
 # ---------------------------------------
 @mcp.tool()
-async def get_portfolios(ctx: Context) -> Dict[str, List[PortfolioItem]]:
+async def get_portfolios(ctx: Context) -> dict:
     """
-    Returns all the account portfolios of all the multi-account.
+    Get portfolios for all accounts.
     
-    :param ctx: The context containing the ezib connection
-    :return: A dictionary mapping account names to a list of portfolio items
+    Args:
+        ctx: The context containing the ezib connection
+        
+    Returns:
+        dict: A dict of portfolio items for all accounts
     """
     ezib = ctx.request_context.lifespan_context.ezib
     if ezib.connected:
@@ -114,12 +127,15 @@ async def get_portfolios(ctx: Context) -> Dict[str, List[PortfolioItem]]:
 # multi-account positions
 # ---------------------------------------
 @mcp.tool()
-async def get_positions(ctx: Context) -> Dict[str, List[Position]]:
+async def get_positions(ctx: Context) -> dict:
     """
-    Returns all the account positions of all the multi-account.
+    Get positions for all accounts.
     
-    :param ctx: The context containing the ezib connection
-    :return: A dictionary mapping account names to a list of position items
+    Args:
+        ctx: The context containing the ezib connection
+        
+    Returns:
+        dict: A dict of position items for all accounts
     """
     ezib = ctx.request_context.lifespan_context.ezib
     if ezib.connected:
@@ -134,16 +150,25 @@ async def get_positions(ctx: Context) -> Dict[str, List[Position]]:
 # active account account values
 # ---------------------------------------
 @mcp.tool()
-async def get_account(ctx: Context) -> List[AccountValue]:
+async def get_account(ctx: Context, account: str = "") -> dict:
     """
-    Returns the account values of the active account.
+    Get account values for the active account.
     
-    :param ctx: The context containing the ezib connection
-    :return: A list of account values
+    Args:
+        ctx (Context): The context containing the ezib connection
+        account (str, optional): The account to get values for. Defaults to "".
+        
+    Returns:
+        dict: A dict of account values for the active account
     """
     ezib = ctx.request_context.lifespan_context.ezib
     if ezib.connected:
-        return ezib.account
+        if account == "":
+            return ezib.account
+        elif account not in ezib.accountCodes:
+            raise ValueError(f"Account {account} not found")
+
+        return ezib.accounts[account]
     else:
         raise Exception("Not connected to Interactive Brokers")
 
@@ -151,16 +176,25 @@ async def get_account(ctx: Context) -> List[AccountValue]:
 # active account portfolio
 # ---------------------------------------
 @mcp.tool()
-async def get_portfolio(ctx: Context) -> List[PortfolioItem]:
+async def get_portfolio(ctx: Context, account: str = "") -> dict:
     """
-    Returns the portfolio items of the active account.
+    Get portfolio for the active account.
     
-    :param ctx: The context containing the ezib connection
-    :return: A list of portfolio items
+    Args:
+        ctx (Context): The context containing the ezib connection
+        account (str, optional): The account to get portfolio for. Defaults to "".
+        
+    Returns:
+        dict: A dict of portfolio items for the active account
     """
     ezib = ctx.request_context.lifespan_context.ezib
     if ezib.connected:
-        return ctx.ezib.portfolio
+        if account == "":
+            return ezib.portfolio
+        elif account not in ezib.accountCodes:
+            raise ValueError(f"Account {account} not found")
+
+        return ezib.portfolios[account]
     else:
         raise Exception("Not connected to Interactive Brokers")
 
@@ -168,16 +202,25 @@ async def get_portfolio(ctx: Context) -> List[PortfolioItem]:
 # active account positions
 # ---------------------------------------
 @mcp.tool()
-async def get_position(ctx: Context) -> List[Position]:
+async def get_position(ctx: Context, account: str = "") -> dict:
     """
-    Returns the position items of the active account.
+    Get positions for the active account.
     
-    :param ctx: The context containing the ezib connection
-    :return: A list of position items
+    Args:
+        ctx (Context): The context containing the ezib connection
+        account (str, optional): The account to get positions for. Defaults to "".
+        
+    Returns:
+        dict: A dict of position items for the active account
     """
     ezib = ctx.request_context.lifespan_context.ezib
     if ezib.connected:
-        return ezib.position
+        if account == "":
+            return ezib.position
+        elif account not in ezib.accountCodes:
+            raise ValueError(f"Account {account} not found")
+
+        return ezib.positions[account]
     else:
         raise Exception("Not connected to Interactive Brokers")
 
